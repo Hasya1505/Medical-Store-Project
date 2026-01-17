@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCloud Staff | Enterprise Billing</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #768bcfff;
+            --accent: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --sidebar-bg: #030b22ff;
+            --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            --glass-card: rgba(255, 255, 255, 0.85);
+            --shadow-soft: 0 10px 30px rgba(0,0,0,0.08);
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-gradient);
+            display: flex;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            padding: 2rem 1.2rem;
+            position: fixed;
+            height: 100vh;
+            color: white;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            display: flex;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            align-items: center;
+        }
+
+        .side-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: #cbd5f5;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+
+        .side-link:hover, .side-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-count {
+            margin-left: auto;
+            background: var(--danger);
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            border-radius: 12px;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 260px;
+            padding: 2.5rem;
+            flex: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+
+        /* GRID SYSTEM */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--glass-card);
+            border-radius: 22px;
+            padding: 1.8rem;
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-4 { grid-column: span 4; }
+        .col-2 { grid-column: span 2; }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* INPUTS & BUTTONS */
+        .search-container { display: flex; gap: 12px; }
+        .search-input {
+            flex: 1;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1px solid #cbd5f5;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 26px;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            padding: 16px;
+            width: 100%;
+            border-radius: 18px;
+            border: none;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 1.5rem;
+        }
+
+        .btn-sq {
+            padding: 8px 16px;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            transition: 0.2s;
+        }
+
+        .btn-sq:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* TABLES */
+        .custom-table { width: 100%; border-collapse: collapse; }
+        .custom-table th {
+            text-align: left;
+            padding: 10px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .custom-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        /* MEDICINE CARDS */
+        .medicine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+            gap: 1.2rem;
+            margin-top: 1rem;
+        }
+
+        .med-item {
+            background: white;
+            border-radius: 18px;
+            padding: 1.2rem;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .med-name {
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        /* LOGISTICS INNER CARD */
+        .inner-glass {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.2rem;
+            border-radius: 18px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 1024px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .col-4 { grid-column: span 2; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; }
+            .main-content { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+<aside class="sidebar">
+    <div class="brand">
+        <i class="fas fa-pills"></i> PharmaCloud
+    </div>
+    <a href="{{ url_for('staff') }}" class="side-link active">
+        <i class="fas fa-cash-register"></i> Billing
+    </a>
+    <a href="{{ url_for('cart') }}" class="side-link">
+        <i class="fas fa-shopping-cart"></i> Cart
+        {% if cart_count|default(0) > 0 %}
+            <span class="badge-count">{{ cart_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{{ url_for('track_orders') }}" class="side-link">
+        <i class="fas fa-truck-ramp-box"></i> Order Tracking
+    </a>
+    <a href="{{ url_for('add_customer') }}" class="side-link">
+        <i class="fas fa-user-plus"></i> Add Customer
+    </a>
+    <a href="{{ url_for('find_customer') }}" class="side-link">
+        <i class="fas fa-search"></i> Find Customer
+    </a>
+    <a href="{{ url_for('logout') }}" class="side-link" style="margin-top:auto;color:#fecaca;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+</aside>
+
+<main class="main-content">
+    <header>
+        <div>
+            <h1 style="font-size: 1.8rem; font-weight: 800;">Staff Terminal</h1>
+            <p>Welcome, <strong>{{ session.get('username') }}</strong></p>
+        </div>
+    </header>
+
+    <div class="bento-grid">
+        <div class="card">
+            <div class="stat-label">Today's Sales</div>
+            <div class="stat-val">
+                ₹{{ "%.0f"|format(daily_sales[0].total_sales|default(0)|float) if daily_sales else '0' }}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="stat-label">Low Stock Alerts</div>
+            <div class="stat-val" style="color: var(--danger);">
+                {{ low_stock_medicines|length }}
+            </div>
+        </div>
+
+        <div class="card col-2">
+            <div class="card-title"><i class="fas fa-search"></i> Inventory Quick Search</div>
+            <form method="POST" action="{{ url_for('search_medicine') }}" class="search-container">
+                <input class="search-input" type="text" name="searchText" placeholder="Enter medicine name..." value="{{ last_search_text|default('') }}" required>
+                <button class="btn-primary" type="submit">Search</button>
+            </form>
+            {% if message %}<div style="margin-top:8px; color:var(--danger); font-size:0.85rem;">{{ message }}</div>{% endif %}
+        </div>
+
+        {% if medicines %}
+        <div class="card col-4">
+            <div class="card-title"><i class="fas fa-list"></i> Search Results ({{ medicines|length }})</div>
+            <form method="POST" action="{{ url_for('bulk_add_to_cart') }}">
+                <div class="medicine-grid">
+                    {% for medicine in medicines %}
+                    <div class="med-item">
+                        <input type="checkbox" name="selected[]" value="{{ loop.index0 }}" style="position:absolute;top:12px;right:12px;">
+                        <div class="med-name">{{ medicine.name }}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            ₹{{ medicine.price }} | Rack: {{ medicine.shelf_rack }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+                            In stock: {{ medicine.countInStock }}
+                        </div>
+                        <input type="hidden" name="name_{{ loop.index0 }}" value="{{ medicine.name }}">
+                        <input type="hidden" name="price_{{ loop.index0 }}" value="{{ medicine.price }}">
+                        <input type="hidden" name="shelf_{{ loop.index0 }}" value="{{ medicine.shelf_rack }}">
+                        <input type="number" name="qty_{{ loop.index0 }}" value="1" min="1" max="{{ medicine.countInStock }}" style="width:100%; border-radius:8px; border:1px solid #ddd; padding:6px;">
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="btn-success" type="submit"><i class="fas fa-cart-plus"></i> Add Selected to Cart</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="card col-2">
+            <div class="card-title"><i class="fas fa-users"></i> Regular Customers</div>
+            <table class="custom-table">
+                <thead><tr><th>Name</th><th>Orders</th><th>Qty</th></tr></thead>
+                <tbody>
+                    {% for customer in customers[:4] %}
+                    <tr>
+                        <td style="font-weight: 700;">{{ customer.customer_name[:15] }}</td>
+                        <td><span style="color: var(--primary); font-weight: 700;">{{ customer.total_orders }}</span></td>
+                        <td>{{ customer.total_quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card col-2">
+            <div class="card-title"><i class="fas fa-receipt"></i> Current Transactions</div>
+            <table class="custom-table">
+                <thead><tr><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for bill in billing_history[:4] %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ bill.get('customer_name', 'Walk-in') }}</td>
+                        <td style="color: var(--primary); font-weight: 800;">₹{{ bill.get('final_amount', 0) }}</td>
+                        <td><span style="color: var(--success); font-weight: 700;">● Paid</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card col-4" style="background: linear-gradient(135deg, #1e40af, #6366f1); color: white; border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+                <div style="flex: 1;">
+                    <div class="card-title" style="color: white;"><i class="fas fa-truck-fast"></i> Logistics & Procurement</div>
+                    <p style="margin-bottom: 1.5rem; opacity: 0.9;">Manage stock shortages and track medicine orders directly from the warehouse.</p>
+                    <a href="{{ url_for('low_stock_page') }}" class="btn-primary" style="background: white; color: var(--accent);">Manage Orders</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card col-4">
+            <div class="card-title"><i class="fas fa-industry"></i> Stock by Company (Quick Filter)</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                {% if company_stock_chart and company_stock_chart.labels %}
+                    {% for label in company_stock_chart.labels %}
+                    <a href="{{ url_for('company_details', company=label) }}" class="btn-sq">{{ label }}</a>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">No company data indexed.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

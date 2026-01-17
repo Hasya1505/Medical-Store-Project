@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCloud | Enterprise Medical Store Management Software</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0ea5a4;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gradient-primary: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #0ea5a4 100%);
+            --gradient-glow: linear-gradient(135deg, #1e40af, #3b82f6);
+            --bg-main: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            --text-dark: #0f172a;
+            --text-light: #475569;
+            --border: #e2e8f0;
+            --shadow-lg: 0 30px 60px rgba(0,0,0,0.16);
+            --shadow-xl: 0 35px 70px rgba(30, 64, 175, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Fixed Background Image */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient( to right, rgba(167, 191, 212, 0.65), rgba(243, 246, 249, 0.9)),
+    url("{{ url_for('static', filename='bgimg.jpg') }}");
+
+background-size: cover;
+background-position: center;
+background-repeat: no-repeat;
+
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            position: sticky;
+            top: 0; z-index: 999;
+            background: rgba(14, 45, 139, 0.95);
+            backdrop-filter: blur(25px);
+            color: white;
+            padding: 0.8rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.0rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* HERO SECTION */
+        .hero { padding: 120px 5% 60px; text-align: center; max-width: 1100px; margin: auto; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center; gap: 0.5rem;
+            background: #dbeafe; color: var(--primary);
+            padding: 0.5rem 1.2rem; border-radius: 50px;
+            font-weight: 700; font-size: 0.85rem; margin-bottom: 2rem;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800; line-height: 1.1;
+            background: var(--gradient-glow);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-btn {
+            background: var(--gradient-primary); color: white;
+            padding: 1.2rem 2.8rem; border-radius: 50px;
+            text-decoration: none; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 0.8rem;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cta-btn:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(30,64,175,0.4); }
+
+        /* KEY STATS - ANIMATED COUNTERS */
+        .stats-banner {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            padding: 80px 5%;
+            background: white;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin: 40px 0;
+        }
+
+        .stat-item h3 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        /* SOLUTIONS VERTICAL CARDS */
+        .solutions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            padding: 60px 5%;
+            max-width: 1300px;
+            margin: auto;
+        }
+
+        .solution-card {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .solution-card:hover {
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+
+        .solution-card::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 6px;
+            background: var(--gradient-primary);
+        }
+
+        .solution-icon {
+            width: 80px; height: 80px;
+            background: #eff6ff;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; color: var(--primary);
+            margin-bottom: 2rem;
+        }
+
+        .solution-list { text-align: left; list-style: none; width: 100%; }
+        .solution-list li {
+            padding: 8px 0; font-size: 0.9rem;
+            color: var(--text-light); display: flex; align-items: center; gap: 10px;
+        }
+        .solution-list li i { color: var(--success); font-size: 1rem; }
+
+        /* PRICING SECTION */
+        .pricing-section { padding: 80px 5%; text-align: center; }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            max-width: 1200px;
+            margin: 50px auto 0;
+        }
+
+        .price-card {
+            background: white;
+            padding: 3.5rem 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .price-card.popular {
+            border: 2px solid var(--primary);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .price-card.popular::before {
+            content: 'MOST POPULAR';
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 4px 15px;
+            border-radius: 20px; font-size: 0.75rem; font-weight: 800;
+        }
+
+        .price-card h4 { font-size: 1.6rem; margin-bottom: 1rem; color: var(--primary-dark); }
+        .price-card .amount { font-size: 3rem; font-weight: 800; color: var(--text-dark); margin-bottom: 2rem; }
+        .price-card .amount span { font-size: 1rem; color: var(--text-light); }
+
+        /* BRAND PARTNERS - LUXURY GLASS LOOK */
+        .brand-strip {
+            position: relative;
+            background: linear-gradient(rgba(220, 223, 231, 0.75), rgba(233, 239, 235, 0.85)), 
+                        url("{{ url_for('static', filename='company.jpeg') }}");
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            padding: 120px 5%;
+            text-align: center;
+            color: black;
+            overflow: hidden;
+            margin: 80px 0;
+        }
+
+        .brand-strip::after {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            backdrop-filter: blur(4px);
+            z-index: 1;
+        }
+
+        .brand-content { position: relative; z-index: 2; }
+
+        .brand-strip h2 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 60px auto 0;
+        }
+
+        .brand-tag {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            padding: 1.5rem 2.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #222222ff;
+            transition: all 0.4s ease;
+            min-width: 200px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .brand-tag:hover {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--primary);
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* TESTIMONIALS */
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem; padding: 60px 5%; max-width: 1300px; margin: auto;
+        }
+
+        .testimonial-card {
+            background: white; padding: 2.5rem;
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .user-meta { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 45px; height: 45px; border-radius: 50%;
+            background: var(--gradient-primary); color: white;
+            display: flex; align-items: center; justify-content: center; font-weight: 800;
+        }
+
+        footer { background: #0f172a; color: #94a3b8; padding: 80px 5% 40px; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4rem; max-width: 1200px; margin: auto; }
+        .footer-col h4 { color: white; margin-bottom: 1.5rem; }
+
+        .animate-on-scroll { opacity: 0; transform: translateY(40px); transition: 0.8s; }
+        .visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body>
+   <div class="status-bar">
+    <div><i class="fa-solid fa-server"></i> System Status - All Services Running</div>
+    <div id="time"></div>
+    <div><i class="fa-solid fa-headset"></i> 24×7 Support - +91 98715-65458</div>
+</div>
+
+
+    <section class="hero">
+        <div class="hero-badge"><i class="fa-solid fa-shield-virus"></i> HIPAA & ISO 27001 CERTIFIED</div>
+        <h1>Modern Solutions for <br>Pharmacy Excellence.</h1>
+        <p style="font-size: 1.25rem; color: var(--text-light); margin-bottom: 2.5rem; max-width: 800px; margin: auto;">
+            PharmaCloud 3.0 provides enterprise-grade tools to manage inventory, automate GST, and scale your pharmacy retail business with ease.
+        </p><br>
+        <div class="cta-buttons">
+            <a href="{{ url_for('login_page') }}" class="cta-btn">
+                <i class="fa-solid fa-rocket"></i> Launch My Dashboard
+            </a>
+        </div>
+    </section>
+
+    <div class="stats-banner">
+        <div class="stat-item">
+            <h3 class="counter" data-target="5000">0</h3>
+            <p style="font-weight:700; color:var(--text-light);">Active Pharmacies</p>
+        </div>
+        <div class="stat-item">
+            <h3 class="counter" data-target="500">0</h3>
+            <p style="font-weight:700; color:var(--text-light);">Annual GMV (Cr+)</p>
+        </div>
+        <div class="stat-item">
+            <h3 class="counter" data-target="2">0</h3>
+            <p style="font-weight:700; color:var(--text-light);">Billing Speed (Sec)</p>
+        </div>
+        <div class="stat-item">
+            <h3 class="counter" data-target="99.99" data-type="float">0</h3>
+            <p style="font-weight:700; color:var(--text-light);">Cloud Uptime (%)</p>
+        </div>
+    </div>
+
+    <div style="text-align: center; padding-top: 60px;">
+        <h2 style="font-size: 2.5rem; color: var(--primary-dark);">End-to-End Solutions</h2>
+        <p style="color: var(--text-light);">Comprehensive management for your entire pharmacy ecosystem.</p>
+    </div>
+
+    <div class="solutions-container">
+        <div class="solution-card animate-on-scroll">
+            <div class="solution-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <h3>Smart Inventory</h3>
+            <p>Maintain optimum stock levels with AI-driven procurement suggestions.</p>
+            <ul class="solution-list">
+                <li><i class="fa-solid fa-circle-check"></i> Real-time Expiry Alerts</li>
+                <li><i class="fa-solid fa-circle-check"></i> Batch-wise Tracking</li>
+                <li><i class="fa-solid fa-circle-check"></i> Automated Re-ordering</li>
+            </ul>
+        </div>
+        <div class="solution-card animate-on-scroll">
+            <div class="solution-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h3>Lightning Billing</h3>
+            <p>Serve customers faster with our optimized point-of-sale system.</p>
+            <ul class="solution-list">
+                <li><i class="fa-solid fa-circle-check"></i> GST-Ready Invoicing</li>
+                <li><i class="fa-solid fa-circle-check"></i> WhatsApp Bill Delivery</li>
+                <li><i class="fa-solid fa-circle-check"></i> UPI Integration</li>
+            </ul>
+        </div>
+        <div class="solution-card animate-on-scroll">
+            <div class="solution-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Deep Analytics</h3>
+            <p>Turn your data into actionable profit insights with P&L reporting.</p>
+            <ul class="solution-list">
+                <li><i class="fa-solid fa-circle-check"></i> Daily Sales Insights</li>
+                <li><i class="fa-solid fa-circle-check"></i> GSTR-1 & 3B Auto-fill</li>
+                <li><i class="fa-solid fa-circle-check"></i> Staff Performance</li>
+            </ul>
+        </div>
+    </div>
+
+    <section class="pricing-section">
+        <h2 style="font-size: 2.5rem; color: var(--primary-dark);">Simple, Transparent Plans</h2>
+        <p style="color: var(--text-light);">No hidden costs. Pay only for what you use.</p>
+        <div class="pricing-grid">
+            <div class="price-card animate-on-scroll">
+                <h4>Basic</h4>
+                <div class="amount">₹499<span>/mo</span></div>
+                <ul class="solution-list">
+                    <li><i class="fa-solid fa-check"></i> Single User</li>
+                    <li><i class="fa-solid fa-check"></i> GST Billing</li>
+                    <li><i class="fa-solid fa-check"></i> Inventory Tracking</li>
+                </ul>
+                <a href="{{ url_for('contact', plan='Basic') }}" class="cta-btn" style="width: 100%; justify-content: center; margin-top: 20px;">Choose Basic</a>
+            </div>
+            <div class="price-card popular animate-on-scroll">
+                <h4>Professional</h4>
+                <div class="amount">₹999<span>/mo</span></div>
+                <ul class="solution-list">
+                    <li><i class="fa-solid fa-check"></i> Unlimited Users</li>
+                    <li><i class="fa-solid fa-check"></i> AI Stock Prediction</li>
+                    <li><i class="fa-solid fa-check"></i> WhatsApp Invoicing</li>
+                </ul>
+                <a href="{{ url_for('contact', plan='Basic') }}" class="cta-btn" style="width: 100%; justify-content: center; margin-top: 20px;">Choose Pro</a>
+            </div>
+            <div class="price-card animate-on-scroll">
+                <h4>Enterprise</h4>
+                <div class="amount">Custom</div>
+                <ul class="solution-list">
+                    <li><i class="fa-solid fa-check"></i> Multi-store Sync</li>
+                    <li><i class="fa-solid fa-check"></i> Warehouse Module</li>
+                    <li><i class="fa-solid fa-check"></i> 24/7 Priority Support</li>
+                </ul>
+                <a href="{{ url_for('contact', plan='Basic') }}" class="cta-btn" style="width: 100%; justify-content: center; margin-top: 20px;">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="brand-strip">
+        <div class="brand-content">
+            <h2 class="animate-on-scroll">Trusted by Top Supply Partners</h2>
+            <p class="animate-on-scroll" style="opacity: 0.9; font-size: 1.2rem;">Seamlessly integrated with India's pharmaceutical giants.</p>
+            <div class="brand-container">
+                <div class="brand-tag">DR REDDY'S</div>
+                <div class="brand-tag">SUN PHARMA</div>
+                <div class="brand-tag">ZYDUS</div>
+                <div class="brand-tag">CIPLA</div>
+                <div class="brand-tag">MANKIND</div>
+                <div class="brand-tag">ABBOTT</div>
+                <div class="brand-tag">GLENMARK</div>
+                <div class="brand-tag">LUPIN</div>
+                <div class="brand-tag">INTAS</div>
+                <div class="brand-tag">CADILA</div>
+                <div class="brand-tag">HETERO</div>
+                <div class="brand-tag">BIOCON</div>
+                <div class="brand-tag">WOCKHARDT</div>
+                <div class="brand-tag">IPCA LABS</div>
+                <div class="brand-tag">SANOFI</div>
+            </div>
+        </div>
+    </section>
+
+    <div style="text-align: center;">
+        <h2 style="font-size: 2.5rem; color: var(--primary-dark);">Voices of Trust</h2>
+        <p style="color: var(--text-light);">Join owners who have revolutionized their medical stores.</p>
+    </div>
+
+    <div class="testimonial-grid">
+        <div class="testimonial-card animate-on-scroll">
+            <p>"Wastage reduced by 90% thanks to the expiry alerts. Best investment for our store."</p>
+            <div class="user-meta">
+                <div class="user-avatar">AK</div>
+                <div><strong>Dr. Amit Kumar</strong><p style="font-size: 0.7rem;">Apollo Medics</p></div>
+            </div>
+        </div>
+        <div class="testimonial-card animate-on-scroll">
+            <p>"The GST automation is a lifesaver. Filing reports used to take days, now it takes seconds."</p>
+            <div class="user-meta">
+                <div class="user-avatar" style="background: var(--secondary);">RP</div>
+                <div><strong>Rajesh Patel</strong><p style="font-size: 0.7rem;">Patel Pharma</p></div>
+            </div>
+        </div>
+        <div class="testimonial-card animate-on-scroll">
+            <p>"Incredibly fast billing. My customers are happy because the queue moves so quickly now."</p>
+            <div class="user-meta">
+                <div class="user-avatar" style="background: var(--warning);">SM</div>
+                <div><strong>Suresh Mehra</strong><p style="font-size: 0.7rem;">City Wellness</p></div>
+            </div>
+        </div>
+        <div class="testimonial-card animate-on-scroll">
+            <p>"The drug database is massive. I can find any medicine and its substitute instantly."</p>
+            <div class="user-meta">
+                <div class="user-avatar" style="background: var(--danger);">ND</div>
+                <div><strong>Neha Desai</strong><p style="font-size: 0.7rem;">Wellness Pharmacy</p></div>
+            </div>
+        </div>
+    </div>
+
+ <footer>
+
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4 style="font-size: 1.5rem;"><i class="fa-solid fa-pills"></i> PharmaCloud</h4>
+                <p>Modernizing the pharmaceutical retail landscape across India since 2020.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Product</h4>
+                <ul><li>Billing</li><li>Inventory</li><li>GST</li><li>Reports</li></ul>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul><li>About Us</li><li>Security</li><li>Privacy</li><li>Terms</li></ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <p>support@pharmacloud.in<br>Level 5, Cyber Tower, Hyderabad</p>
+            </div>
+
+        </div>
+         <div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #1e293b; font-size: 1.1rem;">
+           © 2026 PharmaCloud SaaS Solutions. All rights reserved. ISO 27001 Certified.
+        </div>
+    </footer>
+
+
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            document.getElementById("time").innerText = `🕐 ${now.toLocaleTimeString("en-IN")} IST`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // COUNTER ANIMATION
+        const counters = document.querySelectorAll('.counter');
+        const speed = 100;
+
+        const startCounters = () => {
+            counters.forEach(counter => {
+                const updateCount = () => {
+                    const target = +counter.getAttribute('data-target');
+                    const count = +counter.innerText;
+                    const isFloat = counter.getAttribute('data-type') === 'float';
+                    const inc = target / speed;
+
+                    if (count < target) {
+                        const nextVal = count + inc;
+                        counter.innerText = isFloat ? nextVal.toFixed(2) : Math.ceil(nextVal);
+                        setTimeout(updateCount, 20);
+                    } else {
+                        counter.innerText = target + (isFloat ? "" : "+");
+                    }
+                };
+                updateCount();
+            });
+        };
+
+        // INTERSECTION OBSERVER
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (entry.target.classList.contains('stats-banner')) startCounters();
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+        observer.observe(document.querySelector('.stats-banner'));
+    </script>
+</body>
+</html>

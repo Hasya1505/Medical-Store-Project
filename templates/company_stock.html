@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Inventory - PharmaCloud Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af;
+            --accent: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            --glass-card: rgba(255, 255, 255, 0.7);
+            --card-border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-gradient);
+            color: #1e293b;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Top Bar */
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Summary Bento Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .mini-card {
+            background: var(--glass-card);
+            backdrop-filter: blur(10px);
+            border: var(--card-border);
+            padding: 1.5rem;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .mini-card i {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Inventory Card */
+        .inventory-card {
+            background: var(--glass-card);
+            backdrop-filter: blur(20px);
+            border: var(--card-border);
+            border-radius: 32px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+        }
+
+        .custom-table th {
+            text-align: left;
+            padding: 10px 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .custom-table tbody tr {
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .custom-table td {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            font-size: 0.95rem;
+            border-top: 1px solid transparent;
+            border-bottom: 1px solid transparent;
+        }
+
+        /* Hover Effect */
+        .custom-table tbody tr:hover td {
+            background: white;
+            transform: scale(1.005);
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
+        }
+
+        .custom-table tr td:first-child { 
+            border-radius: 18px 0 0 18px; 
+            font-weight: 700; 
+            color: var(--primary);
+            padding-left: 25px;
+            border-left: 1px solid transparent;
+        }
+        
+        .custom-table tr td:last-child { 
+            border-radius: 0 18px 18px 0; 
+            border-right: 1px solid transparent;
+        }
+
+        .custom-table tbody tr:hover td:first-child { border-left: 1px solid rgba(99, 102, 241, 0.2); }
+        .custom-table tbody tr:hover td:last-child { border-right: 1px solid rgba(99, 102, 241, 0.2); }
+
+        /* Badges */
+        .stock-badge {
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-pill {
+            background: #eef2ff;
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .category-pill:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            border: 1px solid rgba(30, 64, 175, 0.1);
+        }
+
+        .btn-back:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-box">
+            <div>
+                <h1 style="font-weight: 800; letter-spacing: -1.5px; font-size: 2.2rem; margin-bottom: 0.5rem;">Inventory Analysis</h1>
+                <p style="color: #64748b; font-size: 1.1rem;">Company Portfolio: <span style="color: var(--primary); font-weight: 800;">{{ company }}</span></p>
+            </div>
+            <a href="{{ url_for('owner') }}" class="btn-back">
+                <i class="fas fa-chevron-left"></i> Dashboard
+            </a>
+        </div>
+
+        <div class="summary-grid">
+            <div class="mini-card">
+                <i class="fas fa-pills"></i>
+                <div>
+                    <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Total SKUs</div>
+                    <div style="font-size: 1.2rem; font-weight: 800;">{{ medicines|length }} Items</div>
+                </div>
+            </div>
+            <div class="mini-card">
+                <i class="fas fa-boxes-stacked"></i>
+                <div>
+                    <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Stock Health</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);">Operational</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inventory-card">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Pricing</th>
+                        <th>Current Stock</th>
+                        <th>Usage Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in medicines %}
+                    <tr>
+                        <td>
+                            <div style="display:flex; flex-direction:column;">
+                                <span>{{ med.name }}</span>
+                                <small style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Batch: PH-2026</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 800; color: #334155;">₹{{ med.price }}</span>
+                        </td>
+                        <td>
+                            <span class="stock-badge" style="
+                                background: {% if med.countInStock|int < 15 %}rgba(239, 68, 68, 0.1){% else %}rgba(16, 185, 129, 0.1){% endif %};
+                                color: {% if med.countInStock|int < 15 %}var(--danger){% else %}var(--success){% endif %};
+                                border: 1px solid {% if med.countInStock|int < 15 %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %};
+                            ">
+                                <i class="fas {% if med.countInStock|int < 15 %}fa-arrow-trend-down{% else %}fa-check-circle{% endif %}"></i>
+                                {{ med.countInStock }} Units
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('category_view', category=med.Use) }}" class="category-pill">
+                                {{ med.Use }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 50px; color: #94a3b8;">
+                            <i class="fas fa-folder-open fa-3x" style="margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                            No medicines found for this company.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

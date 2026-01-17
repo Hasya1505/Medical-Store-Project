@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Order Tracking Dashboard - PharmaCloud</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #0d6efd;
+            --medical-green: #28a745;
+            --warning-orange: #fd7e14;
+            --danger-red: #dc3545;
+            --purple: #6f42c1;
+            --light-bg: #f0f4f8; /* Soft light background */
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #334155;
+        }
+
+        /* HEADER TEXT COLOR FIX */
+        h1.display-4 {
+            color: #1e293b !important;
+        }
+        .lead-text {
+            color: #64748b !important;
+        }
+
+        /* MEDICAL CARD - LIGHT THEME */
+        .medical-card {
+            background: var(--glass-bg);
+            border: 1px solid #e2e8f0;
+            box-shadow: var(--glass-shadow);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .medical-header {
+            background: #ffffff;
+            color: #1e293b;
+            padding: 1.5rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .header-icon {
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--primary-blue);
+            padding: 1rem;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+
+        /* STATUS BADGES - UPDATED COLORS */
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 25px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-delivered { background: #dcfce7; color: #166534; }
+        .status-shipped { background: #dbeafe; color: #1e40af; }
+        .status-processing { background: #fef3c7; color: #92400e; }
+        .status-pending { background: #f1f5f9; color: #475569; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+
+        /* METRIC CARDS - CLEAN LIGHT STYLE */
+        .metric-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-blue);
+        }
+
+        .metric-card h3 { font-weight: 800; margin-top: 10px; }
+        .metric-card p { color: #64748b; font-weight: 600; margin-bottom: 0; }
+        .metric-card small { color: #94a3b8; }
+
+        .icon-large {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+        }
+
+        /* TABLE STYLING */
+        .table th {
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .order-row:hover {
+            background-color: #f8fbff;
+        }
+
+        /* BUTTONS */
+        .btn-medical {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-medical:hover {
+            background: #0056b3;
+            transform: scale(1.02);
+            color: white;
+        }
+
+        .btn-refresh {
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .btn-refresh:hover {
+            background: #f8fafc;
+        }
+
+        .pulse {
+            border-bottom: 3px solid var(--medical-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold mb-2">
+                        <i class="fas fa-truck-medical text-primary"></i>
+                        Order Tracking
+                    </h1>
+                    <p class="lead lead-text">Real-time logistics monitoring for your pharmacy</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="medical-card">
+                    <div class="medical-header">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon">
+                                <i class="fas fa-clipboard-list fa-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0 fw-bold">Latest Orders</h3>
+                                <small class="text-muted">Currently tracking {{ orders|length }} shipments</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Order ID</th>
+                                        <th>Medicine Details</th>
+                                        <th>Phone</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                        <th>Timeline</th>
+                                        <th class="pe-4">Expected</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr class="order-row">
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary">#{{ order.id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ order.medicine_name[:35] }}</div>
+                                            <div class="small text-muted">{{ order.manufacturer }}</div>
+                                        </td>
+                                        <td>{{ order.customer_phone }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ order.quantity }}</span></td>
+                                        <td>
+                                            <span class="status-badge status-{{ order.status|lower }}">
+                                                <i class="fas fa-{% if order.status=='Delivered' %}check-circle 
+                                                    {% elif order.status=='Shipped' %}shipping-fast 
+                                                    {% elif order.status=='Processing' %}sync fa-spin 
+                                                    {% elif order.status=='Pending' %}clock 
+                                                    {% else %}times-circle {% endif %}"></i>
+                                                {{ order.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted d-block">Ordered:</small>
+                                            <small class="fw-bold">{{ order.order_date.strftime('%d %b, %H:%M') }}</small>
+                                        </td>
+                                        <td class="pe-4">
+                                            {% if order.expected_delivery %}
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2">{{ order.expected_delivery }}</span>
+                                            {% else %}
+                                                <span class="text-muted small">--</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-4x text-light mb-3"></i>
+                            <h4 class="text-muted">No active orders</h4>
+                            <p class="text-muted small">New supply orders will appear here.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-md-3">
+                        <div class="metric-card pulse">
+                            <i class="fas fa-check-double icon-large text-success"></i>
+                            <h3>{{ orders|selectattr('status','equalto','Delivered')|list|length }}</h3>
+                            <p>Delivered</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-route icon-large text-primary"></i>
+                            <h3>{{ orders|selectattr('status','equalto','Shipped')|list|length }}</h3>
+                            <p>In Transit</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-microscope icon-large text-warning"></i>
+                            <h3>{{ orders|selectattr('status','equalto','Processing')|list|length }}</h3>
+                            <p>Lab/Processing</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-hourglass-half icon-large text-secondary"></i>
+                            <h3>{{ orders|selectattr('status','equalto','Pending')|list|length }}</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center pb-5">
+                    <a href="{{ url_for('owner') }}" class="btn btn-medical me-3">
+                        <i class="fas fa-arrow-left me-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('track_orders') }}" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Status
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

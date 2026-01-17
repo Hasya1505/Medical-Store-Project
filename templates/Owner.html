@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 Owner Dashboard - PharmaCloud Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e40af;
+            --accent: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-white: rgba(255, 255, 255, 0.75);
+            --card-border: 1px solid rgba(255, 255, 255, 0.6);
+            --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border-right: var(--card-border);
+            height: 100vh;
+            position: fixed;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 3rem;
+        }
+
+        .side-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: 12px;
+            transition: 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .side-link:hover, .side-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* MAIN CONTENT */
+        .main-wrapper {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 2.5rem 3rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 8px 18px;
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* BENTO GRID */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .glass-card {
+            background: var(--glass-white);
+            backdrop-filter: blur(15px);
+            border: var(--card-border);
+            border-radius: 28px;
+            padding: 1.8rem;
+            transition: 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .col-span-2 { grid-column: span 2; }
+        .col-span-4 { grid-column: span 4; }
+
+        /* STATS */
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CHART & TABLE */
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container { height: 320px; width: 100%; position: relative; }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .custom-table th {
+            text-align: left;
+            padding: 0 15px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .custom-table td {
+            background: rgba(255,255,255,0.5);
+            padding: 16px 15px;
+        }
+
+        .custom-table tr td:first-child { border-radius: 15px 0 0 15px; }
+        .custom-table tr td:last-child { border-radius: 0 15px 15px 0; }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 80px; padding: 2rem 0.5rem; }
+            .sidebar span { display: none; }
+            .main-wrapper { margin-left: 80px; width: calc(100% - 80px); }
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        /* GST Summary Specific Card Styling */
+.stats-card-gst {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(255, 255, 255, 0.8) 100%);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(79, 70, 229, 0.3);
+    border-radius: 28px;
+    padding: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    grid-column: span 2; /* Adjust this to span 2 columns in your bento grid */
+}
+
+.stats-card-gst:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15);
+    background: white;
+    border-color: #4f46e5;
+}
+
+.card-icon-gst {
+    width: 60px;
+    height: 60px;
+    background: #4f46e5;
+    color: white;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    box-shadow: 0 8px 15px rgba(79, 70, 229, 0.3);
+}
+
+.card-info-gst h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.card-info-gst p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Styling for Company Quick Filter Buttons */
+.btn-sq {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-block;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-sq:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+}
+
+/* Ensure the container inside the card is clean */
+.company-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-area">
+            <i class="fas fa-prescription-bottle-medical"></i>
+            <span>PharmaCloud</span>
+        </div>
+        
+        <nav style="flex: 1;">
+            <a href="#" class="side-link active"><i class="fas fa-gauge-high"></i> <span>Dashboard</span></a>
+            <a href="#sales-section" class="side-link"><i class="fas fa-chart-line"></i> <span>Sales Trend</span></a>
+            <a href="#stock-section" class="side-link"><i class="fas fa-boxes-stacked"></i> <span>Inventory</span></a>
+            <a href="{{ url_for('low_stock_page') }}" class="side-link"><i class="fas fa-triangle-exclamation"></i> <span>Stock Alerts</span></a>
+            <a href="{{ url_for('track_orders') }}" class="side-link"><i class="fas fa-truck-fast"></i> <span>Track Orders</span></a>
+        </nav>
+
+        <a href="{{ url_for('logout') }}" class="side-link" style="color: var(--danger);">
+    <i class="fas fa-right-from-bracket"></i>
+    <span>Logout</span>
+</a>
+
+    </aside>
+
+    <main class="main-wrapper">
+        <header>
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 800;">Owner Dashboard</h1>
+                <p style="color: var(--text-muted);">Real-time Pharmacy Performance Analytics</p>
+            </div>
+            <div class="user-profile">
+                <i class="fas fa-user-shield" style="color: var(--primary);"></i>
+                <span style="font-weight: 700;">Admin View</span>
+            </div>
+        </header>
+
+        <div class="bento-grid">
+            <div class="glass-card">
+                <div class="icon-box" style="background: #dbeafe; color: var(--primary);"><i class="fas fa-wallet"></i></div>
+                <div class="stat-val">₹{{ "%.0f"|format(total_sales|default(0)|float) }}</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="icon-box" style="background: #dcfce7; color: var(--success);"><i class="fas fa-cash-register"></i></div>
+                <div class="stat-val">₹{{ "%.0f"|format(daily_sales[0].total_sales|default(0)|float) }}</div>
+                <div class="stat-label">Today's Sales</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="icon-box" style="background: #ffedd5; color: var(--warning);"><i class="fas fa-box-open"></i></div>
+                <div class="stat-val">{{ low_stock_medicines|length }}</div>
+                <div class="stat-label">Low Stock Items</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="icon-box" style="background: #f3e8ff; color: var(--accent);"><i class="fas fa-users"></i></div>
+                <div class="stat-val">{{ customers|length }}</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+
+            <div class="glass-card col-span-2" id="sales-section">
+                <div class="card-title"><i class="fas fa-chart-area" style="color: var(--primary);"></i> 15-Day Sales Trend</div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card col-span-2">
+                <div class="card-title"><i class="fas fa-calendar-check" style="color: var(--accent);"></i> Monthly Growth</div>
+                <div class="chart-container">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card col-span-2" id="top-meds">
+                <div class="card-title"><i class="fas fa-medal" style="color: var(--success);"></i> Top Selling Medicines</div>
+                <div class="chart-container">
+                    <canvas id="topMedicinesChart"></canvas>
+                </div>
+            </div>
+            <div class="glass-card col-span-2" id="stock-section">
+    <div class="card-title">
+        <div style="background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px;">
+            <i class="fas fa-industry" style="color: var(--accent);"></i>
+        </div>
+        Stock by Manufacturer
+    </div>
+<div class="chart-container-flex" style="display: flex; gap: 25px; align-items: center; height: 300px; margin-top: 10px;">
+    <div class="canvas-area" style="flex: 1.3; position: relative; height: 100%;">
+        <canvas id="companyStockChart"></canvas>
+    </div>
+
+    <div class="legend-area" id="html-legend" style="flex: 1; height: 100%; overflow-y: auto; padding-right: 10px;">
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = {{ company_stock_chart.labels|tojson|safe if company_stock_chart else [] }};
+    const values = {{ company_stock_chart.data|tojson|safe if company_stock_chart else [] }};
+    
+    // Vibrant Palette matching your reference image
+   const colors = [
+    '#f97316', '#8b5cf6','#fbbf24', '#d946ef', '#94b6e6', '#9ca3af', '#e67d4c', '#10b981', // Your original 7
+    '#3452a6', '#ec4899', '#7ed7c3', '#3c2a8f', '#22c55e', '#a855f7', '#3b82f6' // New additions
+];
+
+    const ctx = document.getElementById('companyStockChart').getContext('2d');
+    
+    const myChart = new Chart(ctx, {
+        type: 'pie', // Changed from doughnut to pie
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        plugins: [ChartDataLabels], // Plugin to show numbers on slices
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            // Removed cutout to make it a full pie
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value) => value // Shows the stock number inside
+                }
+            }
+        }
+    });
+
+    // Populate the Custom Legend
+    const legendContainer = document.getElementById('html-legend');
+    labels.forEach((label, i) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+            <span style="display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
+                <span class="legend-dot" style="background:${colors[i % colors.length]}"></span>
+                ${label}
+            </span>
+            <span class="legend-val">${values[i]}</span>
+        `;
+        legendContainer.appendChild(item);
+    });
+});
+</script>
+
+<style>
+    /* Custom Scrollbar for the Legend */
+    #html-legend::-webkit-scrollbar { width: 4px; }
+    #html-legend::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+    .legend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .legend-dot {
+        height: 8px;
+        width: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .legend-val {
+        color: var(--text-main);
+        font-weight: 700;
+        margin-left: 10px;
+    }
+</style>
+</div>
+       <div class="glass-card col-span-2" id="customer-section">
+                <div class="card-title">Regular Customers</div>
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>Name</th><th>Orders</th><th>Qty</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers[:5] %}
+                        <tr>
+                            <td style="font-weight: 700;">{{ customer.customer_name[:18] }}</td>
+                            <td><span class="badge" style="background: #e0e7ff; color: var(--primary);">{{ customer.total_orders }}</span></td>
+                            <td>{{ customer.total_quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="glass-card col-span-2" id="recent-trans">
+                <div class="card-title">Recent Transactions</div>
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>Customer</th><th>Amount</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in billing_history[:5] %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ bill.get('customer_name', 'Walk-in') }}</td>
+                            <td style="color: var(--primary); font-weight: 800;">₹{{ bill.get('final_amount', 0) }}</td>
+                            <td><span style="color: var(--success); font-weight: 700;"><i class="fas fa-check-circle"></i> Paid</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="glass-card col-span-2" style="background: linear-gradient(135deg, #1e40af, #6366f1); color: white;">
+                <div class="card-title" style="color: white;"><i class="fas fa-bell"></i> Critical Actions</div>
+                <p style="margin-bottom: 2rem; opacity: 0.9;">You have {{ low_stock_medicines|length }} items below threshold and {{ recent_orders|length }} active shipments.</p>
+                <div style="display: flex; gap: 10px;">
+                    <a href="{{ url_for('low_stock_page') }}" class="btn-primary" style="background: white; color: var(--primary);">
+                        Restock Portal
+                    </a>
+                    <a href="{{ url_for('track_orders') }}" class="btn-primary" style="background: rgba(255,255,255,0.2); border: 1px solid white;">
+                        Logistics
+                    </a>
+                </div>
+            </div>
+           
+<div class="glass-card col-span-2" 
+         onclick="location.href='{{ url_for('gst_summary') }}'" 
+         style="background: linear-gradient(135deg, #059669, #10b981); color: white; cursor: pointer; transition: transform 0.2s;">
+    
+        <div class="card-title" style="color: white;">
+         <i class="fas fa-calculator"></i> Finance & Tax
+        </div>
+    
+      <p style="margin-bottom: 2rem; opacity: 0.9;">
+         Manage your GST filings, view tax breakdowns, and audit recent payment reports.
+      </p>
+
+        <div style="display: flex; gap: 10px;">
+           <a href="{{ url_for('gst_summary') }}" class="btn-primary" 
+           style="background: white; color: #059669; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-block;">
+            📊 GST Summary
+           </a>
+        
+            <a href="{{ url_for('payment_history') }}" class="btn-primary" 
+            style="background: rgba(133, 220, 151, 0.2); border: 1px solid white; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-block;">
+            💳 Payments
+            </a>
+        </div>
+</div>
+
+ <div class="glass-card col-span-2">
+                <div class="card-title">Staff Activity</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span style="font-weight: 600;">Rahul Patel</span>
+                        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Leaves: 2</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span style="font-weight: 600;">Neha Shah</span>
+                        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Leaves: 1</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span style="font-weight: 600;">Amit Verma</span>
+                        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Leaves: 3</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span style="font-weight: 600;">Pooja Mehta</span>
+                        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Leaves: 0</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span style="font-weight: 600;">Karan Joshi</span>
+                        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Leaves: 1</span>
+                    </div>
+                </div>
+            </div>
+
+        <div class="glass-card col-span-2">
+    <div class="card-title">
+        <i class="fas fa-industry" style="color: var(--warning);"></i> 
+        Stock by Company (Quick Filter)
+    </div>
+    
+    <div class="company-grid">
+        {% if company_stock_chart and company_stock_chart.labels %}
+            {% for label in company_stock_chart.labels %}
+                <a href="{{ url_for('company_details', company=label) }}" class="btn-sq">
+                    {{ label }}
+                </a>
+            {% endfor %}
+        {% else %}
+            <p style="color: var(--text-muted); font-size: 0.85rem; padding: 10px;">
+                <i class="fas fa-info-circle"></i> No company data indexed yet.
+            </p>
+        {% endif %}
+    </div>
+</div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartDefaults = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            };
+
+            // 15-Day Sales
+            new Chart(document.getElementById('salesChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ sales_chart_data.labels|tojson|safe if sales_chart_data else [] }},
+                    datasets: [{
+                        data: {{ sales_chart_data.data|tojson|safe if sales_chart_data else [] }},
+                        borderColor: '#1e40af',
+                        backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: chartDefaults
+            });
+
+            // Monthly Sales
+            new Chart(document.getElementById('monthlySalesChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ monthly_sales_chart.labels|tojson|safe if monthly_sales_chart else [] }},
+                    datasets: [{
+                        data: {{ monthly_sales_chart.data|tojson|safe if monthly_sales_chart else [] }},
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: chartDefaults
+            });
+
+            // Top Medicines
+       new Chart(document.getElementById('topMedicinesChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ top_medicines_chart.labels|tojson|safe if top_medicines_chart else [] }},
+        datasets: [{
+            data: {{ top_medicines_chart.data|tojson|safe if top_medicines_chart else [] }},
+            backgroundColor: [
+                '#10b981', // green
+                '#3b82f6', // blue
+                '#f59e0b', // yellow
+                '#ef4444', // red
+                '#8b5cf6', // purple
+                '#14b8a6', // teal
+                '#ec4899'  // pink
+            ],
+            borderRadius: 10,
+            // --- ADD THESE TO DECREASE BAR WIDTH ---
+            barThickness: 25,      // Sets a fixed thin width (20-30px is standard)
+            maxBarThickness: 30    // Ensures bars don't get too wide on large screens
+        }]
+    },
+    options: {
+        ...chartDefaults,
+        scales: {
+            x: {
+                grid: { display: false } // Cleans up the X-axis look
+            },
+            y: {
+                beginAtZero: true,
+                grid: { display: true }
+            }
+        }
+    }
+});
+
+        });
+    </script>
+</body>
+</html>

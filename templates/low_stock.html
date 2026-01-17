@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restock Portal - PharmaCloud Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #f8fafc;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 2rem;
+            color: #1e293b;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .stock-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        .stock-table th { text-align: left; padding: 10px; color: #64748b; text-transform: uppercase; font-size: 0.8rem; }
+        .stock-table td { background: white; padding: 15px 10px; }
+        .stock-table tr td:first-child { border-radius: 12px 0 0 12px; }
+        .stock-table tr td:last-child { border-radius: 0 12px 12px 0; }
+
+        .badge-danger { background: #fee2e2; color: var(--danger); padding: 4px 12px; border-radius: 20px; font-weight: 700; }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-back { background: #e2e8f0; color: #475569; margin-right: 10px; }
+        
+        .checkbox-custom { width: 18px; height: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1 style="font-weight: 800;"><i class="fas fa-box-open" style="color: var(--primary);"></i> Low Stock Inventory</h1>
+            <p style="color: #64748b;">Items currently below the safety threshold (15 units)</p>
+        </div>
+        <div>
+            <a href="javascript:history.back()" class="btn btn-back">Back</a>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <form action="{{ url_for('place_restock_order') }}" method="POST">
+            <table class="stock-table">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Medicine Name</th>
+                        <th>Manufacturer</th>
+                        <th>Current Stock</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in low_stock_medicines %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_meds" value="{{ med.medicine_name }}" class="checkbox-custom"></td>
+                        <td style="font-weight: 700;">{{ med.medicine_name }}</td>
+                        <td>{{ med.manufacturer }}</td>
+                        <td><span class="badge-danger">{{ med.stock }} left</span></td>
+                        <td><i class="fas fa-location-dot"></i> {{ med.shelf_rack }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--success); font-weight: 700;">
+                            <i class="fas fa-check-circle"></i> All stock levels are healthy!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if low_stock_medicines %}
+            <div style="margin-top: 2rem; text-align: right;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-cart-arrow-down"></i> Process Restock Order
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

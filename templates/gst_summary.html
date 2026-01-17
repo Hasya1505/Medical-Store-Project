@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GST Summary Report - PharmaCloud Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #0f172a;
+            --success: #10b981;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            padding: 2rem;
+            color: var(--secondary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.05);
+            padding: 3.5rem;
+        }
+
+        .header { margin-bottom: 3rem; border-left: 5px solid var(--primary); padding-left: 1.5rem; }
+        h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
+        .sub { color: #64748b; font-size: 1rem; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .box {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 2rem;
+            transition: 0.3s;
+        }
+
+        .box:hover { transform: translateY(-5px); background: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+
+        .box h4 {
+            font-size: 0.7rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .box p { font-size: 1.8rem; font-weight: 800; color: var(--secondary); }
+
+        .highlight { background: var(--secondary); color: white; grid-column: span 1; }
+        .highlight p { color: var(--success); }
+        .highlight h4 { color: #94a3b8; }
+
+        .split-card { grid-column: span 2; display: flex; flex-direction: column; justify-content: center; }
+        
+        .split-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        .split-row:last-child { border-bottom: none; }
+
+        /* Logic Section Styling */
+        .logic-section {
+            margin-top: 3.5rem;
+            padding: 2rem;
+            background: #fdf2f2; /* Light accent background */
+            border-radius: 24px;
+            border: 1px solid #fee2e2;
+        }
+
+        .math-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .step-icon {
+            width: 32px; height: 32px; background: var(--primary); color: white;
+            border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 14px;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+        .btn:hover { opacity: 0.9; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3); }
+
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .split-card { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>GST Summary Report</h1>
+        <p class="sub">Financial & Tax Compliance Overview</p>
+    </div>
+
+    <div class="grid">
+        
+        <div class="box">
+            <h4>Total Sales</h4>
+            <p>₹{{ "%.2f"|format(total_sales) }}</p>
+        </div>
+
+        <div class="box">
+            <h4>Store Discounts</h4>
+            <p style="color: #ef4444;">-₹{{ "%.2f"|format(total_discount) }}</p>
+        </div>
+
+        <div class="box">
+            <h4>Taxable Amount</h4>
+            <p>₹{{ "%.2f"|format(taxable_amount) }}</p>
+        </div>
+ 
+         <div class="box highlight">
+            <h4>Net Revenue (Final)</h4>
+            <p>₹{{ "%.2f"|format(net_revenue) }}</p>
+        </div>
+        
+        <div class="box split-card">
+            <h4>GST Distribution (5%)</h4>
+            <div class="split-row">
+                <span>Central GST (CGST 2.5%)</span>
+                <strong>₹{{ "%.2f"|format(total_gst / 2) }}</strong>
+            </div>
+            <div class="split-row">
+                <span>State GST (SGST 2.5%)</span>
+                <strong>₹{{ "%.2f"|format(total_gst / 2) }}</strong>
+            </div>
+            <div class="split-row" style="margin-top: 5px; color: var(--primary);">
+                <span>Total GST Collected</span>
+                <strong>₹{{ "%.2f"|format(total_gst) }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="logic-section">
+        <h3 style="margin-bottom: 1.5rem;"><i class="fas fa-square-root-variable"></i> Calculation Math Logic</h3>
+        
+        <div class="math-step">
+            <div class="step-icon">1</div>
+            <p><strong>Gross Basis:</strong> Total Sales (₹{{ "%.2f"|format(total_sales) }}) - Discount (₹{{ "%.2f"|format(total_discount) }}) = <span style="color: var(--primary);">Taxable Base (₹{{ "%.2f"|format(taxable_amount) }})</span></p>
+        </div>
+
+        <div class="math-step">
+            <div class="step-icon">2</div>
+            <p><strong>Tax Calculation:</strong> Taxable Base (₹{{ "%.2f"|format(taxable_amount) }}) × 5% GST = <span style="color: var(--primary);">₹{{ "%.2f"|format(total_gst) }}</span></p>
+        </div>
+
+        <div class="math-step">
+            <div class="step-icon">3</div>
+            <p><strong>Net Result:</strong> Taxable Base + Total GST = <span style="color: var(--success);">Net Revenue (₹{{ "%.2f"|format(net_revenue) }})</span></p>
+        </div>
+        
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 1.5rem; border-top: 1px solid #fee2e2; padding-top: 1rem;">
+            * This logic ensures the owner only pays tax on the actual amount received after store discounts.
+        </p>
+    </div>
+
+    <a href="{{ url_for('owner') }}" class="btn">
+        <i class="fas fa-arrow-left"></i> Return to Owner Dashboard
+    </a>
+</div>
+
+</body>
+</html>
