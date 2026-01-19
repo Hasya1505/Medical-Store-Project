@@ -1,8 +1,3 @@
-"""
-🚀 PHARMACLOUD PRO - PRODUCTION-READY PHARMACY MANAGEMENT SYSTEM
-Medical Store Software with Owner Dashboard & Staff Billing
-Compatible with MySQL + CSV Hybrid Data Storage
-"""
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
@@ -82,33 +77,46 @@ def write_users(users):
 # 3. BUSINESS LOGIC FUNCTIONS
 # ========================================
 def get_low_stock_medicines(limit=15):
-    """Get medicines with stock below threshold"""
-    low_stock = []
-    medicines = read_csv()
-    for m in medicines:
-        try:
-            stock = int(m.get("countInStock", 0))
-            if stock < limit:
-                low_stock.append({
-                    "medicine_name": m.get("name", ""),
-                    "manufacturer": m.get("Manufacture", ""),
-                    "stock": stock,
-                    "shelf_rack": m.get("Shelf/Rack No", "N/A")
-                })
-        except:
-            pass
-    return sorted(low_stock, key=lambda x: x['stock'])
+    """Get medicines with stock below threshold from DB"""
+    db = get_db_connection()
+    if not db:
+        return []
+    
+    cur = db.cursor(dictionary=True)
+    # Cast countInStock to signed to ensure numeric comparison works correctly
+    cur.execute("""
+        SELECT name as medicine_name, 
+               manufacture as manufacturer, 
+               countInStock as stock, 
+               shelf_rack_no as shelf_rack 
+        FROM products 
+        WHERE CAST(countInStock AS SIGNED) < %s 
+        ORDER BY CAST(countInStock AS SIGNED) ASC
+    """, (limit,))
+    
+    low_stock = cur.fetchall()
+    db.close()
+    return low_stock
 
-def remove_from_low_stock_csv(selected_medicines):
-    """Reset stock in CSV after ordering"""
-    medicines = read_csv()
-    for m in medicines:
-        if m.get("name") in selected_medicines:
-            m["countInStock"] = "50"  # Reset after order
-    with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=medicines[0].keys())
-        writer.writeheader()
-        writer.writerows(medicines)
+def restock_medicines(selected_medicines):
+    """Update stock in DB to 50 for selected medicines"""
+    db = get_db_connection()
+    if not db:
+        return
+
+    cur = db.cursor()
+    # Create placeholders for the IN clause (e.g., %s, %s, %s)
+    placeholders = ', '.join(['%s'] * len(selected_medicines))
+    query = f"UPDATE products SET countInStock = 50 WHERE name IN ({placeholders})"
+    
+    try:
+        cur.execute(query, selected_medicines)
+        db.commit()
+        print(f"✅ Restocked {cur.rowcount} medicines.")
+    except Exception as e:
+        print(f"❌ Restock Error: {e}")
+    finally:
+        db.close()
 
 def get_staff_members():
     """Get mock staff data"""
@@ -298,30 +306,68 @@ def get_monthly_sales_chart(months=12):
     return {"labels": labels, "data": data}
 
 def get_company_stock_chart(limit=10):
-    """
-    Get companies sorted by frequency (most medicines),
-    not by stock sum
-    """
-    medicines = read_csv()
-    company_count = {}
+    """Get top manufacturers by product count from DB"""
+    db = get_db_connection()
+    if not db:
+        return {"labels": [], "data": []}
+        
+    cur = db.cursor(dictionary=True)
+    cur.execute("""
+        SELECT manufacture, COUNT(*) as count 
+        FROM products 
+        WHERE manufacture IS NOT NULL AND manufacture != ''
+        GROUP BY manufacture 
+        ORDER BY count DESC 
+        LIMIT %s
+    """, (limit,))
+    
+    rows = cur.fetchall()
+    db.close()
 
-    for m in medicines:
-        company = m.get("Manufacture", "").strip()
-        if not company:
-            continue
-        company_count[company] = company_count.get(company, 0) + 1
-
-    # Sort by frequency (highest first)
-    sorted_companies = sorted(
-        company_count.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )[:limit]
-
-    labels = [c[0] for c in sorted_companies]
-    data = [c[1] for c in sorted_companies]
+    labels = [r['manufacture'] for r in rows]
+    data = [r['count'] for r in rows]
 
     return {"labels": labels, "data": data}
+
+@app.route('/place_restock_order', methods=['POST'])
+def place_restock_order():
+    """Process restock: Create Order Record + Reset Stock to 50"""
+    selected_meds = request.form.getlist('selected_meds')
+    
+    if selected_meds:
+        # STEP 1: Insert into ORDERS table (To show in Track Orders)
+        try:
+            db = get_db_connection()
+            if db:
+                cur = db.cursor()
+                now = datetime.now()
+                delivery_date = now + timedelta(days=7) # ✅ Delivery = Current + 7 Days
+
+                for med_name in selected_meds:
+                    # We insert 'Supplier' as placeholder for phone, and 50 as quantity
+                    cur.execute("""
+                        INSERT INTO orders 
+                        (customer_phone, medicine_name, quantity, status, order_date, expected_delivery) 
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        'Supplier',    # Placeholder for customer_phone
+                        med_name,      # Medicine Name
+                        50,            # Quantity (Since we reset stock to 50)
+                        'Ordered',     # Status
+                        now,           # Order Date (Current)
+                        delivery_date  # Expected Delivery (+7 Days)
+                    ))
+                
+                db.commit()
+                db.close()
+                print(f"✅ Created {len(selected_meds)} new orders in database.")
+        except Exception as e:
+            print(f"❌ Error Creating Orders: {e}")
+
+        # STEP 2: Update Stock in Products Table (Removes from Low Stock Page)
+        restock_medicines(selected_meds)
+    
+    return redirect(url_for('low_stock_page'))
 
 def get_recent_orders(limit=5):
     """Recent purchase orders"""
@@ -339,38 +385,63 @@ def get_recent_orders(limit=5):
     db.close()
     return orders
 
+def cleanup_old_orders():
+    """Remove orders that are 3 days past their expected delivery date"""
+    db = get_db_connection()
+    if not db:
+        return
+
+    cur = db.cursor()
+    try:
+        # Delete orders where expected_delivery is older than 3 days ago
+        cur.execute("""
+            DELETE FROM orders 
+            WHERE expected_delivery < DATE_SUB(CURDATE(), INTERVAL 3 DAY)
+        """)
+        db.commit()
+        if cur.rowcount > 0:
+            print(f"🧹 Cleaned up {cur.rowcount} expired orders.")
+    except Exception as e:
+        print(f"❌ Error cleaning old orders: {e}")
+    finally:
+        db.close()
+        
 def get_medicines_by_company(company_name):
-    """Filter medicines from CSV by company (safe match)"""
-    all_meds = read_csv()
-    company_name = company_name.strip().lower()
+    """Filter medicines from DB by company"""
+    db = get_db_connection()
+    if not db:
+        return []
 
-    return [
-        m for m in all_meds
-        if m.get("Manufacture", "").strip().lower() == company_name
-    ]
-
+    cur = db.cursor(dictionary=True)
+    # ✅ FIX: Select 'use0' as 'Use' so the HTML template can find it
+    cur.execute("""
+        SELECT name, price, countInStock, shelf_rack_no, manufacture, use0 as `Use`
+        FROM products 
+        WHERE manufacture = %s
+    """, (company_name,))
+    
+    data = cur.fetchall()
+    db.close()
+    return data
 def get_medicines_by_category(category_name):
-    """Filter medicines from CSV by Use/Category (safe match)"""
-    all_meds = read_csv()
-    category_name = category_name.strip().lower()
+    """Filter medicines from DB by Category (checking use0 and use1)"""
+    db = get_db_connection()
+    if not db:
+        return []
 
-    return [
-        m for m in all_meds
-        if m.get("Use", "").strip().lower() == category_name
-    ]
+    cur = db.cursor(dictionary=True)
+    term = f"%{category_name}%"
+    # ✅ FIX: Select 'use0' as 'Use' here too
+    cur.execute("""
+        SELECT name, price, countInStock, shelf_rack_no, manufacture, use0 as `Use`, use1 
+        FROM products 
+        WHERE use0 LIKE %s OR use1 LIKE %s
+    """, (term, term))
+    
+    data = cur.fetchall()
+    db.close()
+    return data
 
-@app.route('/category/<category>')
-def category_view(category):
-    # Allow both staff and owner
-    if session.get('role') not in ['staff', 'owner']:
-        return redirect(url_for('login_page'))
-
-    medicines = get_medicines_by_category(category)
-    return render_template(
-        'company_stock.html',   # reuse same template
-        company=category,
-        medicines=medicines
-    )
 
 @app.route('/contact')
 def contact():
@@ -391,40 +462,84 @@ def landing():
 # ========================================
 # 5. ROUTES - AUTHENTICATION
 # ========================================
+def init_user_list():
+    """Creates user.csv with username and password if it doesn't exist"""
+    if not os.path.exists(USERS_CSV):
+        print(f"⚠️ {USERS_CSV} not found. Creating default List...")
+        
+        # We save the HASHED password for 'admin123' to match the login logic
+        # hash for 'admin123' -> 240be518fabd2724ddb6f04eeb1da596
+        users = [
+            {'username': 'admin', 'password': '240be518fabd2724ddb6f04eeb1da596', 'role': 'owner', 'phone': '1234567890'},
+            {'username': 'staff', 'password': '1405e3ec39446e9df5371584347522d7', 'role': 'staff', 'phone': '0987654321'}
+        ]
+        
+        try:
+            with open(USERS_CSV, 'w', newline='', encoding='utf-8') as f:
+                fieldnames = ['username', 'password', 'role', 'phone']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(users)
+            print("✅ User List (user.csv) created successfully!")
+        except Exception as e:
+            print(f"❌ Error creating user list: {e}")
+            
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
-    """Login page with role-based redirect"""
+    # Ensure List exists
+    init_user_list()
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role')
-        users = read_users()
+
+        # Safety Check: Prevent crash if password is empty
+        if not password:
+             return render_template('login.html', msg="Please enter a password")
+
+        # Create Hash of input password
         input_hash = hashlib.sha256(password.encode()).hexdigest()[:32]
+
+        print(f"🔍 TRYING LOGIN: User={username}, Role={role}")
+        print(f"🔑 Input Password: {password}")
+        print(f"🔐 Input Hash: {input_hash}")
+
+        # Read Users
+        users = read_users()
         
         for user in users:
-            user_hash = user['password']
-            if (user['username'] == username and
-                (user_hash == password or user_hash == input_hash) and
-                user['role'] == role):
-                session.clear()
-                session['role'] = role
-                session['username'] = username
-                session['cart'] = []
-                print(f"✅ LOGIN SUCCESS: {username} ({role})")
+            # Check if Username and Role match
+            if user['username'] == username and user['role'] == role:
+                print(f"✅ User Found in CSV: {user}")
                 
-                if role == 'staff':
-                    return redirect(url_for('staff'))
+                # CHECK 1: Is the password in CSV equal to the HASH? (Normal case)
+                # CHECK 2: Is the password in CSV equal to PLAIN text? (If you manually edited CSV)
+                if user['password'] == input_hash or user['password'] == password:
+                    session.clear()
+                    session['role'] = role
+                    session['username'] = username
+                    session['cart'] = []
+                    print("🚀 LOGIN SUCCESS!")
+                    
+                    if role == 'staff':
+                        return redirect(url_for('staff'))
+                    else:
+                        return redirect(url_for('owner'))
                 else:
-                    return redirect(url_for('owner'))
-        
-        return render_template('login.html', msg="Invalid credentials")
+                    print(f"❌ Password Mismatch. CSV has: {user['password']}")
+
+        print("❌ Login Failed: No matching user/password found.")
+        return render_template('login.html', msg="Invalid Username or Password")
+    
     return render_template('login.html')
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    """Password reset functionality"""
+    """Password reset for List Base (CSV)"""
     message = ""
     success = False
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         role = request.form.get('role', '').strip().lower()
@@ -436,19 +551,28 @@ def forgot_password():
         else:
             users = read_users()
             user_found = False
+            
+            # Loop through users to find the match
             for user in users:
-                if (user['username'].strip() == username and
-                    user['role'].strip().lower() == role and
-                    user['phone'].strip() == phone):
+                if (user['username'] == username and
+                    user['role'] == role and
+                    user['phone'] == phone):
+                    
+                    # Hash the new password before saving
                     hashed_pw = hashlib.sha256(new_password.encode()).hexdigest()[:32]
                     user['password'] = hashed_pw
-                    write_users(users)
-                    success = True
-                    message = "Password updated successfully. Please login with new password."
+                    
                     user_found = True
                     break
-            if not user_found:
-                message = f"User not found: {username}/{role}/{phone}"
+            
+            if user_found:
+                # Write the updated list back to CSV
+                write_users(users)
+                success = True
+                message = "Password updated successfully. Please login."
+            else:
+                message = "User details not found."
+
     return render_template('forgot_password.html', message=message, success=success)
 
 @app.route('/logout')
@@ -484,23 +608,33 @@ def search_medicine():
     if session.get('role') != 'staff':
         return redirect(url_for('login_page'))
 
-    raw_input = request.form.get('searchText', '').lower().strip()
-
-    # split by comma or new line
+    raw_input = request.form.get('searchText', '').strip()
+    # Split by comma or newline for multiple search terms
     terms = [t.strip() for t in raw_input.replace(',', '\n').splitlines() if t.strip()]
 
+    if not terms:
+        return redirect(url_for('staff'))
+
+    db = get_db_connection()
     results = []
-    seen = set()
-
-    for medicine in read_csv():
-        med_name = medicine.get('name', '').lower()
-
-        for term in terms:
-            if term in med_name and med_name not in seen:
-                medicine['shelf_rack'] = medicine.get('Shelf/Rack No', 'N/A')
-                results.append(medicine)
-                seen.add(med_name)
-                break   # avoid duplicate add
+    
+    if db:
+        cur = db.cursor(dictionary=True)
+        # Build a dynamic query: SELECT * FROM products WHERE name LIKE %s OR name LIKE %s ...
+        # This implementation searches for ANY of the terms
+        where_clauses = " OR ".join(["name LIKE %s" for _ in terms])
+        params = [f"%{term}%" for term in terms]
+        
+        query = f"""
+            SELECT name, price, countInStock, shelf_rack_no as shelf_rack, 
+                   manufacture, use0, use1 
+            FROM products 
+            WHERE {where_clauses}
+        """
+        
+        cur.execute(query, params)
+        results = cur.fetchall()
+        db.close()
 
     session['last_search_results'] = results
     session['last_search_text'] = raw_input
@@ -737,22 +871,24 @@ def invoice():
     return render_template('invoice.html', bill=bill)
 
 
-
 @app.route('/customer_to_cart', methods=['POST'])
 def customer_to_cart():
-    """Requirement 1: Direct find_customer data to cart"""
     if session.get('role') != 'staff':
         return redirect(url_for('login_page'))
     
     cart = session.get('cart', [])
     name = request.form.get('medicine_name')
-    # Fetch price from CSV to ensure accuracy
-    medicines = read_csv()
-    price = 0
-    for m in medicines:
-        if m['name'] == name:
-            price = float(m['price'])
-            break
+    
+    # Fetch price from DB
+    price = 0.0
+    db = get_db_connection()
+    if db:
+        cur = db.cursor()
+        cur.execute("SELECT price FROM products WHERE name = %s", (name,))
+        row = cur.fetchone()
+        if row:
+            price = float(row[0])
+        db.close()
 
     cart.append({
         'name': name,
@@ -764,6 +900,7 @@ def customer_to_cart():
     session.modified = True
     return redirect(url_for('cart'))
 
+
 @app.route('/low_stock_page')
 def low_stock_page():
     """View medicines with low inventory"""
@@ -774,21 +911,15 @@ def low_stock_page():
     low_stock = get_low_stock_medicines(limit=15)
     return render_template('low_stock.html', low_stock_medicines=low_stock)
 
-@app.route('/place_restock_order', methods=['POST'])
-def place_restock_order():
-    """Process restock and reset stock to 50"""
-    selected_meds = request.form.getlist('selected_meds')
-    
-    if selected_meds:
-        # Calls the helper function to update SearchMedicineData.csv
-        remove_from_low_stock_csv(selected_meds)
-    
-    return redirect(url_for('low_stock_page'))
 @app.route('/track_orders')
 def track_orders():
     if session.get('role') not in ['owner', 'staff']:
         return redirect(url_for('login_page'))
 
+    # ✅ CALL THE NEW FUNCTION HERE
+    cleanup_old_orders()
+
+    # Now fetch the remaining orders
     orders = get_recent_orders(20)
     return render_template('track_orders.html', orders=orders)
 
@@ -804,6 +935,101 @@ def company_details(company):
         company=company,
         medicines=medicines
     )
+         
+@app.route('/upload_csv', methods=['POST'])
+def upload_csv():
+    """Upload CSV and insert medicines into Database (Windows Safe Version)"""
+    
+    # 1. Security & File Checks
+    if session.get('role') != 'owner':
+        return redirect(url_for('login_page'))
+
+    if 'file' not in request.files:
+        return redirect(url_for('owner'))
+
+    file = request.files['file']
+    
+    if file.filename == '':
+        return redirect(url_for('owner'))
+
+    if file:
+        # Use absolute path to ensure we know exactly where the file is
+        filepath = os.path.abspath("temp_upload.csv")
+        file.save(filepath)
+
+        db = None
+        try:
+            db = get_db_connection()
+            if not db:
+                return "Database Error", 500
+
+            cur = db.cursor()
+            count = 0
+
+            # ✅ FIX: The 'with' block ensures 'f' is closed automatically
+            # once the indentation ends.
+            with open(filepath, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                
+                for row in reader:
+                    # --- Date Formatting Logic ---
+                    expiry_str = row.get('expirydate', '')
+                    formatted_date = None
+                    if expiry_str:
+                        try:
+                            d = datetime.strptime(expiry_str, '%m/%d/%Y')
+                            formatted_date = d.strftime('%Y-%m-%d')
+                        except ValueError:
+                            formatted_date = datetime.now().strftime('%Y-%m-%d')
+
+                    # --- Database Insertion ---
+                    cur.execute("""
+                        INSERT INTO products (
+                            name, price, manufacture, type, packSize, 
+                            substitute0, substitute1, use0, use1, 
+                            countInStock, expirydate, shelf_rack_no
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        row.get('name'),
+                        row.get('price'),
+                        row.get('Manufacture'),
+                        row.get('Type'),
+                        row.get('PackSize'),
+                        row.get('Substitute0'),
+                        row.get('Substitute1'),
+                        row.get('Use0'),
+                        row.get('Use1'),
+                        row.get('countInStock'),
+                        formatted_date,
+                        row.get('Shelf/Rack No')
+                    ))
+                    count += 1
+
+            # End of 'with' block -> File is now CLOSED.
+            
+            db.commit()
+            print(f"✅ Successfully added {count} medicines.")
+            
+        except Exception as e:
+            print(f"❌ CSV Upload Error: {e}")
+            
+        finally:
+            # 2. Cleanup Database Connection
+            if db and db.is_connected():
+                db.close()
+            
+            # 3. Cleanup File (Safe Delete)
+            # The file is definitely closed now because we are outside the 'with' block.
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    print(f"🗑️ Cleaned up temp file: {filepath}")
+            except PermissionError:
+                print("⚠️ Warning: File is still locked by Windows. Will be deleted next time.")
+            except Exception as e:
+                print(f"⚠️ Cleanup Warning: {e}")
+
+    return redirect(url_for('owner'))
 
 # ========================================
 # 7. ROUTES - OWNER DASHBOARD
@@ -838,8 +1064,6 @@ def gst_summary():
     db = get_db_connection()
     cur = db.cursor()
 
-    # We use a subquery to get the UNIQUE total for each bill first, 
-    # then we sum those totals. This prevents double-counting.
     cur.execute("""
         SELECT 
             SUM(bill_subtotal) as total_sales,
@@ -860,10 +1084,13 @@ def gst_summary():
     row = cur.fetchone()
     db.close()
 
-    total_sales = row[0] or 0
-    total_discount = row[1] or 0
-    total_gst = row[2] or 0
-    net_revenue = row[3] or 0
+    # ✅ FIX: Convert all Decimal values to float immediately
+    # This prevents the "Decimal vs Float" math error in the HTML template
+    total_sales = float(row[0] or 0)
+    total_discount = float(row[1] or 0)
+    total_gst = float(row[2] or 0)
+    net_revenue = float(row[3] or 0)
+    
     taxable_amount = total_sales - total_discount
 
     return render_template(
@@ -872,7 +1099,8 @@ def gst_summary():
         total_discount=total_discount,
         taxable_amount=taxable_amount,
         total_gst=total_gst,
-        net_revenue=net_revenue
+        net_revenue=net_revenue,
+        current_date=datetime.now()
     )
 
 def get_all_payments(limit=100):
@@ -901,7 +1129,21 @@ def get_all_payments(limit=100):
     data = cur.fetchall()
     db.close()
     return data
+@app.route('/category/<category>')
+def category_view(category):
+    if session.get('role') not in ['owner', 'staff']:
+        return redirect(url_for('login_page'))
 
+    # Get medicines for this category
+    medicines = get_medicines_by_category(category)
+    
+    # Reuse the company_stock.html template
+    return render_template(
+        'company_stock.html', 
+        company=f"Category: {category}", 
+        medicines=medicines
+    )
+    
 @app.route('/payment_history')
 def payment_history():
     if session.get('role') not in ['owner', 'staff']:
@@ -985,4 +1227,6 @@ def to_billing():
 # ========================================
 if __name__ == "__main__":
     print("🚀 PHARMACLOUD PRO - STARTING...")
+    init_user_list() # <--- Add this line here
     app.run(debug=True, host='0.0.0.0', port=5000)
+
